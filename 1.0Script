@@ -1,42 +1,86 @@
 local Players = game:GetService("Players")
+local Teams = game:GetService("Teams")
+
+-- List of colors to cycle through every second
+local colorCycle = {
+    Color3.fromRGB(0, 0, 255),   -- Blue
+    Color3.fromRGB(255, 0, 0),   -- Red
+    Color3.fromRGB(0, 255, 0),   -- Green
+    Color3.fromRGB(255, 255, 0), -- Yellow
+    Color3.fromRGB(255, 165, 0)  -- Orange
+}
 
 -- Function to add a highlight effect to a player's character
-local function highlightPlayer(player)
-    if player.Character then
-        -- Check if highlight already exists to avoid duplication
-        if not player.Character:FindFirstChild("HighlightEffect") then
-            local highlight = Instance.new("Highlight")
-            highlight.Name = "HighlightEffect"
-            highlight.Parent = player.Character
-            highlight.FillColor = Color3.fromRGB(0, 0, 255) -- Blue fill
-            highlight.FillTransparency = 0.7 -- More transparent blue
-            highlight.OutlineColor = Color3.fromRGB(0, 0, 255) -- Blue outline
-            highlight.OutlineTransparency = 0 -- Solid outline
+local function highlightPlayer(player, color)
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        -- Check if the player is on a different team than the local player
+        if player.Team and player.Team ~= Players.LocalPlayer.Team then
+            -- Check if highlight already exists to avoid duplication
+            if not player.Character:FindFirstChild("HighlightEffect") then
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "HighlightEffect"
+                highlight.Parent = player.Character
+                highlight.FillColor = color
+                highlight.FillTransparency = 0.7 -- More transparent
+                highlight.OutlineColor = color
+                highlight.OutlineTransparency = 0 -- Solid outline
+            end
         end
+    end
+end
+
+-- Function to remove highlight from a player's character
+local function removeHighlight(player)
+    if player.Character and player.Character:FindFirstChild("HighlightEffect") then
+        player.Character.HighlightEffect:Destroy()
     end
 end
 
 -- Function to apply highlight to all current players
 local function highlightAllPlayers()
     for _, player in ipairs(Players:GetPlayers()) do
-        highlightPlayer(player)
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            -- Apply highlight only to players who are not on the local player's team
+            if player.Team and player.Team ~= Players.LocalPlayer.Team then
+                highlightPlayer(player, colorCycle[math.random(1, #colorCycle)])
+            end
+        end
     end
 end
 
 -- Highlight players when they join or respawn
 Players.PlayerAdded:Connect(function(player)
     player.CharacterAdded:Connect(function()
-        highlightPlayer(player)
+        -- Apply highlight only if the player is not on the local player's team
+        if player.Team and player.Team ~= Players.LocalPlayer.Team then
+            highlightPlayer(player, colorCycle[math.random(1, #colorCycle)])
+        end
+    end)
+
+    -- Remove highlight when player leaves
+    player.Removing:Connect(function()
+        removeHighlight(player)
     end)
 end)
 
 -- Continuously update the highlight effect every second
 task.spawn(function()
     while true do
-        highlightAllPlayers()
+        highlightAllPlayers() -- Apply highlights to all players who are not on the local player's team
         task.wait(1) -- Wait for 1 second before updating again
     end
 end)
 
--- Initial highlight for all existing players
+-- Continuously check and update the local player's team every second
+task.spawn(function()
+    while true do
+        -- Re-check if the local player has changed teams
+        if Players.LocalPlayer.Team ~= Players.LocalPlayer.Team then
+            highlightAllPlayers()  -- Reapply highlights if necessary
+        end
+        task.wait(1) -- Wait for 1 second before checking again
+    end
+end)
+
+-- Initial highlight for all existing players (excluding local player's team)
 highlightAllPlayers()
