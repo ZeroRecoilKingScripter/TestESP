@@ -1,0 +1,43 @@
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Function to create a highlight box around a character
+local function highlightPlayer(player)
+    if player ~= LocalPlayer then -- Don't highlight yourself
+        local character = player.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            -- Check if already highlighted
+            if character:FindFirstChild("HighlightBox") then return end
+            
+            local highlight = Instance.new("BoxHandleAdornment")
+            highlight.Name = "HighlightBox"
+            highlight.Adornee = character
+            highlight.Size = character:GetExtentsSize() + Vector3.new(2, 2, 2)
+            highlight.Color3 = Color3.fromRGB(173, 216, 230) -- Light blue highlight
+            highlight.Transparency = 0.5
+            highlight.AlwaysOnTop = true
+            highlight.ZIndex = 5
+            highlight.Parent = character
+        end
+    end
+end
+
+-- Function to remove highlight when a player leaves
+local function onPlayerRemoving(player)
+    if player.Character then
+        local highlight = player.Character:FindFirstChild("HighlightBox")
+        if highlight then highlight:Destroy() end
+    end
+end
+
+-- Update function to highlight all players every second
+local function updateHighlights()
+    for _, player in pairs(Players:GetPlayers()) do
+        highlightPlayer(player)
+    end
+end
+
+-- Connect events
+Players.PlayerRemoving:Connect(onPlayerRemoving)
+RunService.Heartbeat:Connect(updateHighlights)
