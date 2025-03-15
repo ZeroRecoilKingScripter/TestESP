@@ -4,15 +4,15 @@ local Players = game:GetService("Players")
 local function highlightPlayer(player)
     if player.Character then
         -- Check if highlight already exists to avoid duplication
-        if player.Character:FindFirstChild("HighlightEffect") then return end
-        
-        local highlight = Instance.new("Highlight")
-        highlight.Name = "HighlightEffect"
-        highlight.Parent = player.Character
-        highlight.FillColor = Color3.fromRGB(0, 0, 255) -- Blue fill
-        highlight.FillTransparency = 0.7 -- More transparent blue
-        highlight.OutlineColor = Color3.fromRGB(0, 0, 255) -- Blue outline
-        highlight.OutlineTransparency = 0 -- Solid outline
+        if not player.Character:FindFirstChild("HighlightEffect") then
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "HighlightEffect"
+            highlight.Parent = player.Character
+            highlight.FillColor = Color3.fromRGB(0, 0, 255) -- Blue fill
+            highlight.FillTransparency = 0.7 -- More transparent blue
+            highlight.OutlineColor = Color3.fromRGB(0, 0, 255) -- Blue outline
+            highlight.OutlineTransparency = 0 -- Solid outline
+        end
     end
 end
 
@@ -30,6 +30,13 @@ Players.PlayerAdded:Connect(function(player)
     end)
 end)
 
+-- Continuously update the highlight effect every second
+task.spawn(function()
+    while true do
+        highlightAllPlayers()
+        task.wait(1) -- Wait for 1 second before updating again
+    end
+end)
+
 -- Initial highlight for all existing players
 highlightAllPlayers()
---tEST
