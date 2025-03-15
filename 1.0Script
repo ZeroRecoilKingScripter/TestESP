@@ -1,42 +1,34 @@
-local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 
--- Function to create a highlight effect on a character
+-- Function to add a highlight effect to a player's character
 local function highlightPlayer(player)
-    if player ~= LocalPlayer then -- Don't highlight yourself
-        local character = player.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            -- Check if already highlighted
-            if character:FindFirstChild("HighlightEffect") then return end
-            
-            local highlight = Instance.new("Highlight")
-            highlight.Name = "HighlightEffect"
-            highlight.Adornee = character
-            highlight.FillColor = Color3.fromRGB(0, 102, 204) -- Light blue highlight
-            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-            highlight.FillTransparency = 0.5
-            highlight.OutlineTransparency = 0.2
-            highlight.Parent = character
-        end
-    end
-end
-
--- Function to remove highlight when a player leaves
-local function onPlayerRemoving(player)
     if player.Character then
-        local highlight = player.Character:FindFirstChild("HighlightEffect")
-        if highlight then highlight:Destroy() end
+        -- Check if highlight already exists to avoid duplication
+        if player.Character:FindFirstChild("HighlightEffect") then return end
+        
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "HighlightEffect"
+        highlight.Parent = player.Character
+        highlight.FillColor = Color3.fromRGB(0, 0, 255) -- Blue fill
+        highlight.FillTransparency = 0.7 -- More transparent blue
+        highlight.OutlineColor = Color3.fromRGB(0, 0, 255) -- Blue outline
+        highlight.OutlineTransparency = 0 -- Solid outline
     end
 end
 
--- Update function to highlight all players every second
-local function updateHighlights()
-    for _, player in pairs(Players:GetPlayers()) do
+-- Function to apply highlight to all current players
+local function highlightAllPlayers()
+    for _, player in ipairs(Players:GetPlayers()) do
         highlightPlayer(player)
     end
 end
 
--- Connect events
-Players.PlayerRemoving:Connect(onPlayerRemoving)
-RunService.Heartbeat:Connect(updateHighlights)
+-- Highlight players when they join or respawn
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        highlightPlayer(player)
+    end)
+end)
+
+-- Initial highlight for all existing players
+highlightAllPlayers()
